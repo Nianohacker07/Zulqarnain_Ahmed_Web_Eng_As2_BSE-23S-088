@@ -1,0 +1,351 @@
+<!Doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Registration Form</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body {
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; 
+         background:#f6f7fb; 
+         padding:24px; }
+
+    .card { 
+        background:#fff; 
+        max-width:640px; margin:0 auto; 
+        padding:20px 24px; 
+        border-radius:8px; 
+        box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+
+    h1 { 
+        font-size:20px; 
+        margin:0 0 14px; }
+
+    .form-row { 
+        display:flex; 
+        gap:12px; }
+
+    .form-group { 
+        margin-bottom:12px; 
+        flex:1; 
+        display:flex; 
+        flex-direction:column; }
+
+    label { 
+        font-size:13px;
+         margin-bottom:6px; }
+
+    input[type="text"], input[type="email"], input[type="password"], select { 
+        padding:8px 10px; 
+        border:1px solid #d6d9e6;
+        border-radius:6px; 
+        font-size:14px; }
+
+    .radios { 
+        display:flex; 
+        gap:12px; 
+        align-items:center; }
+
+    .error { 
+        color:#b00020; 
+        font-size:12px;
+         margin-top:6px; }
+
+    .hint { 
+        font-size:12px; 
+        color:#6b7280;
+         margin-bottom:8px; }
+
+    .btn { 
+        padding:10px 14px;
+         border-radius:8px;
+         border:0;
+         font-weight:600;
+         cursor:pointer; }
+
+    .btn:disabled { 
+        opacity:0.6; 
+        cursor:not-allowed; }
+    .btn-primary { 
+        background:#2563eb; 
+        color:#fff; }
+    .summary { background:#f8fafc; padding:14px; border-radius:8px; margin-top:14px; }
+    .field-label { font-weight:600; margin-top:8px; }
+  </style>
+</head>
+<body>
+     <!-- ================= SECTION A: FORM FIELDS ================= -->
+  <div class="card">
+    <h1>Registration Form</h1>
+    <form id="regForm" novalidate>
+      <div class="form-row">
+        <div class="form-group" id="g-first">
+          <label for="firstName">First Name</label>
+          <input id="firstName" name="firstName" type="text" autocomplete="given-name" />
+        </div>
+        <div class="form-group" id="g-last">
+          <label for="lastName">Last Name</label>
+          <input id="lastName" name="lastName" type="text" autocomplete="family-name" />
+        </div>
+      </div>
+
+      <div class="form-group" id="g-surname">
+        <label for="surname">Surname / Family Name</label>
+        <input id="surname" name="surname" type="text" />
+      </div>
+
+      <div class="form-group" id="g-email">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" id="g-password">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" />
+          <div class="hint">At least 8 characters and one uppercase.</div>
+        </div>
+        <div class="form-group" id="g-confirm">
+          <label for="confirmPassword">Confirm Password</label>
+          <input id="confirmPassword" name="confirmPassword" type="password" />
+        </div>
+      </div>
+
+      <div class="form-group" id="g-gender">
+        <label>Gender</label>
+        <div class="radios">
+          <label><input type="radio" name="gender" value="Male" /> Male</label>
+          <label><input type="radio" name="gender" value="Female" /> Female</label>
+          <label><input type="radio" name="gender" value="Other" /> Other</label>
+        </div>
+      </div>
+
+      <div class="form-group" id="g-country">
+        <label for="country">Country</label>
+        <select id="country" name="country">
+          <option value="">Select Country</option>
+          <option value="Pakistan">Pakistan</option>
+          <option value="United States">United States</option>
+          <option value="United Kingdom">United Kingdom</option>
+          <option value="India">India</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="g-terms">
+        <label><input id="terms" type="checkbox" /> I accept the Terms and Conditions</label>
+      </div>
+
+      <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+        <button id="submitBtn" class="btn btn-primary" type="submit" disabled>Submit</button>
+        <span id="status" style="font-size:13px;color:#374151"></span>
+      </div>
+    </form>
+
+    <div id="resultArea"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('regForm');
+    const first = document.getElementById('firstName');
+    const last = document.getElementById('lastName');
+    const surname = document.getElementById('surname');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const genderNodes = document.querySelectorAll('input[name="gender"]');
+    const country = document.getElementById('country');
+    const terms = document.getElementById('terms');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultArea = document.getElementById('resultArea');
+    const statusText = document.getElementById('status');
+
+    // ================= SECTION B: ERROR HANDLING USING DOM =================
+
+    function showError(containerEl, message) {
+      clearError(containerEl);
+      const err = document.createElement('div');
+      err.classList.add('error');
+      err.textContent = message;
+      containerEl.appendChild(err);
+    }
+
+    function clearError(containerEl) {
+      const existing = containerEl.querySelector('.error');
+      if (existing) existing.remove();
+    }
+
+    // ================= SECTION C: VALIDATION LOGIC =================
+
+    function validateFirstName() {
+      const val = first.value.trim();
+      const g = document.getElementById('g-first');
+      if (val.length < 5) {
+        showError(g, 'First name must be at least 5 characters.');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validateEmail() {
+      const val = email.value.trim();
+      const g = document.getElementById('g-email');
+      if (val === '' || val.indexOf('@') === -1) {
+        showError(g, 'Please enter a valid email containing "@".');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validatePassword() {
+      const val = password.value;
+      const g = document.getElementById('g-password');
+      if (val.length < 8) {
+        showError(g, 'Password must be at least 8 characters.');
+        return false;
+      }
+      if (!/[A-Z]/.test(val)) {
+        showError(g, 'Password must contain at least one uppercase letter.');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validateConfirmPassword() {
+      const g = document.getElementById('g-confirm');
+      if (confirmPassword.value !== password.value) {
+        showError(g, 'Passwords do not match.');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validateGender() {
+      const g = document.getElementById('g-gender');
+      let ok = false;
+      genderNodes.forEach(n => { if (n.checked) ok = true; });
+      if (!ok) {
+        showError(g, 'Please select a gender.');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validateCountry() {
+      const g = document.getElementById('g-country');
+      if (!country.value) {
+        showError(g, 'Please choose a country.');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validateTerms() {
+      const g = document.getElementById('g-terms');
+      if (!terms.checked) {
+        showError(g, 'You must accept terms and conditions.');
+        return false;
+      }
+      clearError(g);
+      return true;
+    }
+
+    function validateAll() {
+      const v1 = validateFirstName();
+      const v2 = validateEmail();
+      const v3 = validatePassword();
+      const v4 = validateConfirmPassword();
+      const v5 = validateGender();
+      const v6 = validateCountry();
+      const v7 = validateTerms();
+
+      const allValid = v1 && v2 && v3 && v4 && v5 && v6 && v7;
+      submitBtn.disabled = !allValid;
+      statusText.textContent = allValid ? 'All fields valid — ready to submit.' : '';
+      return allValid;
+    }
+
+    // Live listeners
+    first.addEventListener('input', () => { validateFirstName(); validateAll(); });
+    last.addEventListener('input', () => validateAll());
+    surname.addEventListener('input', () => validateAll());
+    email.addEventListener('input', () => { validateEmail(); validateAll(); });
+    password.addEventListener('input', () => { validatePassword(); validateConfirmPassword(); validateAll(); });
+    confirmPassword.addEventListener('input', () => { validateConfirmPassword(); validateAll(); });
+    country.addEventListener('change', () => { validateCountry(); validateAll(); });
+    terms.addEventListener('change', () => { validateTerms(); validateAll(); });
+    genderNodes.forEach(n => n.addEventListener('change', () => { validateGender(); validateAll(); }));
+
+    // Prevent native form submission and show summary using DOM methods
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      // Final check
+      if (!validateAll()) return;
+
+      // Clear previous result if any
+      resultArea.innerHTML = '';
+
+      // Build summary
+      const box = document.createElement('div');
+      box.classList.add('summary');
+
+      const title = document.createElement('div');
+      title.textContent = 'Registration Summary';
+      title.style.fontWeight = '700';
+      title.style.marginBottom = '8px';
+      box.appendChild(title);
+
+      const fullName = document.createElement('div');
+      fullName.classList.add('field-label');
+      fullName.textContent = 'Full Name';
+      box.appendChild(fullName);
+
+      const fullNameVal = document.createElement('div');
+      fullNameVal.textContent = `${first.value.trim()} ${last.value.trim()} ${surname.value.trim()}`.replace(/\s+/g,' ').trim();
+      box.appendChild(fullNameVal);
+
+      const emailLabel = document.createElement('div');
+      emailLabel.classList.add('field-label');
+      emailLabel.textContent = 'Email';
+      box.appendChild(emailLabel);
+
+      const emailVal = document.createElement('div');
+      emailVal.textContent = email.value.trim();
+      box.appendChild(emailVal);
+
+      const countryLabel = document.createElement('div');
+      countryLabel.classList.add('field-label');
+      countryLabel.textContent = 'Country';
+      box.appendChild(countryLabel);
+
+      const countryVal = document.createElement('div');
+      countryVal.textContent = country.value;
+      box.appendChild(countryVal);
+
+      const genderLabel = document.createElement('div');
+      genderLabel.classList.add('field-label');
+      genderLabel.textContent = 'Gender';
+      box.appendChild(genderLabel);
+
+      const genderVal = document.createElement('div');
+      let selectedGender = '';
+      genderNodes.forEach(n => { if (n.checked) selectedGender = n.value; });
+      genderVal.textContent = selectedGender;
+      box.appendChild(genderVal);
+
+      // Append summary and hide form (but keep it in DOM so teacher can inspect)
+      resultArea.appendChild(box);
+      form.style.display = 'none';
+    });
+
+    // keep submit disabled initially and run a light validation pass
+    submitBtn.disabled = true;
+  </script>
+</body>
+</html>
